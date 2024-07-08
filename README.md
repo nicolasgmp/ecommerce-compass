@@ -1,4 +1,4 @@
-<h1 align="center"> Desafio Compass - Ecommerce</h1>
+<h1 align="center"> Desafio Compass - E-Commerce</h1>
 
 <p align="center">
   <a href="https://github.com/magrininicolas/placesAPIMVC/blob/main/LICENSE">
