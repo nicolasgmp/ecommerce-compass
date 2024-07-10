@@ -1,6 +1,5 @@
-version: '3.9'
-
 services:
+
   db-postgres:
     image: postgres
     restart: always
@@ -10,8 +9,3 @@ services:
       POSTGRES_DATABASE: ecommerce
     ports:
       - "5432:5432"
-  # redis:
-  #   image: redis
-  #   command: redis-server --requirePass nicolas0708
-  #   ports:
-  #     - "6379:6379"
