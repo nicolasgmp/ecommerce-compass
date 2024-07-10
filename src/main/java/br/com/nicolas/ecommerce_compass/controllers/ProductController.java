@@ -55,7 +55,6 @@ public class ProductController {
 
     @Transactional
     @PutMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
-    @CacheEvict(value = "products")
     public ResponseEntity<ProductResponseDTO> update(
             @PathVariable UUID id, @RequestBody @Valid UpdateProductDTO product) {
         var old = productService.findById(id);
@@ -65,7 +64,6 @@ public class ProductController {
 
     @Transactional
     @PutMapping("/changestate/{id}")
-    @CacheEvict(value = "products")
     public ResponseEntity<Void> changeState(@PathVariable UUID id) {
         productService.changeProductState(id);
         return ResponseEntity.noContent().build();
@@ -73,7 +71,6 @@ public class ProductController {
 
     @Transactional
     @DeleteMapping("/{id}")
-    @CacheEvict(value = "products")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();
