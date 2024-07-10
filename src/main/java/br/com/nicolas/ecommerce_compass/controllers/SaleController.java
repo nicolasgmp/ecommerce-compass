@@ -20,6 +20,7 @@ import br.com.nicolas.ecommerce_compass.dtos.sale.SaleRequestDTO;
 import br.com.nicolas.ecommerce_compass.dtos.sale.SaleResponseDTO;
 import br.com.nicolas.ecommerce_compass.maps.SaleMapper;
 import br.com.nicolas.ecommerce_compass.services.SaleService;
+import jakarta.transaction.Transactional;
 
 @RestController
 @RequestMapping("/sales")
@@ -57,6 +58,7 @@ public class SaleController {
                 .map(SaleMapper::fromSaleToResponse).toList());
     }
 
+    @Transactional
     @PostMapping(produces = "application/json", consumes = "application/json")
     public ResponseEntity<SaleResponseDTO> create(@RequestBody SaleRequestDTO sale) {
         var newSale = saleService.create(SaleMapper.fromRequestToSale(sale));
@@ -66,12 +68,14 @@ public class SaleController {
         return ResponseEntity.created(uri).body(SaleMapper.fromSaleToResponse(newSale));
     }
 
+    @Transactional
     @PutMapping("/{id}")
     public ResponseEntity<SaleResponseDTO> update(@PathVariable UUID id, @RequestBody SaleRequestDTO sale) {
         var updated = saleService.update(id, SaleMapper.fromRequestToSale(sale));
         return ResponseEntity.ok().body(SaleMapper.fromSaleToResponse(updated));
     }
 
+    @Transactional
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         saleService.delete(id);
