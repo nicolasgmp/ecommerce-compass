@@ -7,6 +7,9 @@ import br.com.nicolas.ecommerce_compass.models.SaleItem;
 
 public class SaleItemMapper {
 
+    private SaleItemMapper() {
+    }
+
     public static SaleItem fromRequestToSaleItem(SaleItemRequestDTO dto) {
         SaleItem item = new SaleItem();
         item.setProductId(dto.productId());

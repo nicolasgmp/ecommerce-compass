@@ -1,6 +1,7 @@
 package br.com.nicolas.ecommerce_compass.services;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -20,21 +21,14 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    @Cacheable(value = "products")
-    public Product findById(Long id) {
+    @Cacheable(value = "products", key = "#id")
+    public Product findById(UUID id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Produto não encontrado no banco de dados com o id: " + id));
     }
 
-    public void findByName(String name) {
-        var product = productRepository.findByName(name);
-        if (product.isPresent()) {
-            throw new DuplicateEntryException("Produto com o nome " + name + " já existe");
-        }
-    }
-
-    @Cacheable(value = "products")
+    @Cacheable(value = "products", key = "'all'")
     public List<Product> findAll() {
         var products = productRepository.findAll();
         if (products.isEmpty()) {
@@ -47,30 +41,25 @@ public class ProductService {
     @CacheEvict(value = "products", allEntries = true)
     public Product create(Product product) {
         product.setActive(true);
-        findByName(product.getName());
-        if (product.getStockQty() <= 0) {
-            throw new EntityValidationException("O estoque não pode ser negativo ou igual a 0");
+        this.verifyByName(product.getName());
+        if (product.getName() == null || product.getName().isBlank()) {
+            throw new EntityValidationException("O nome não pode estar vazio");
         }
+        this.verifyStockQtyNegativeOrZero(product);
         return productRepository.save(product);
     }
 
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
-    public Product update(Product product, Long id) {
-        findByName(product.getName());
-        var old = findById(id);
-        if (product.getStockQty() <= 0) {
-            throw new EntityValidationException("O estoque não pode ser negativo ou igual a 0");
-        }
+    public Product update(Product product, UUID id) {
+        var old = this.findById(id);
+        this.verifyStockQtyNegativeOrZero(product);
         if (product.getStockQty() >= 0) {
-            if (product.getStockQty() < old.getStockQty()) {
-                throw new EntityValidationException("O estoque não pode ser menor do que o atual");
-            }
+            this.verifyStockQtySmallerThanActual(product, old);
         }
         if (!old.isActive()) {
             throw new EntityValidationException("Um produto inativo não pode ser atualizado");
         }
-        old.setName(product.getName());
         old.setPrice(product.getPrice());
         old.setStockQty(product.getStockQty());
         old.setUpdatedAt();
@@ -79,8 +68,8 @@ public class ProductService {
 
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
-    public void delete(Long id) {
-        var toDelete = findById(id);
+    public void delete(UUID id) {
+        var toDelete = this.findById(id);
         if (toDelete.isSelled()) {
             throw new EntityValidationException("Um produto que já foi vendido não pode ser excluído");
         }
@@ -89,8 +78,8 @@ public class ProductService {
 
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
-    public void changeProductState(Long id) {
-        var product = findById(id);
+    public void changeProductState(UUID id) {
+        var product = this.findById(id);
         product.setActive(!product.isActive());
         productRepository.save(product);
     }
@@ -103,5 +92,31 @@ public class ProductService {
         }
         product.setStockQty(product.getStockQty() - quantity);
         productRepository.save(product);
+    }
+
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
+    public void returnItemsToProductStock(Product product, Integer qty) {
+        product.setStockQty(product.getStockQty() + qty);
+        productRepository.save(product);
+    }
+
+    private void verifyByName(String name) {
+        var product = productRepository.findByName(name);
+        if (product.isPresent()) {
+            throw new DuplicateEntryException("Produto com o nome " + name + " já existe");
+        }
+    }
+
+    private void verifyStockQtyNegativeOrZero(Product product) {
+        if (product.getStockQty() <= 0) {
+            throw new EntityValidationException("O estoque não pode ser negativo ou igual a 0");
+        }
+    }
+
+    private void verifyStockQtySmallerThanActual(Product newP, Product oldP) {
+        if (newP.getStockQty() < oldP.getStockQty()) {
+            throw new EntityValidationException("O estoque não pode ser menor que o atual");
+        }
     }
 }

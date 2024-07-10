@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -27,8 +28,8 @@ public class Product implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String name;
 
@@ -61,11 +62,11 @@ public class Product implements Serializable {
         return serialVersionUID;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -74,9 +75,6 @@ public class Product implements Serializable {
     }
 
     public void setName(String name) {
-        if (name == null || name.isEmpty() || name.isBlank()) {
-            throw new EntityValidationException("O nome não pode estar vazio");
-        }
         this.name = name;
     }
 

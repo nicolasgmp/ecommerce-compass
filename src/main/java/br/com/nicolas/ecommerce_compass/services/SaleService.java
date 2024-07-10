@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -19,13 +20,14 @@ import br.com.nicolas.ecommerce_compass.exceptions.ResourceNotFoundException;
 import br.com.nicolas.ecommerce_compass.models.Product;
 import br.com.nicolas.ecommerce_compass.models.Sale;
 import br.com.nicolas.ecommerce_compass.models.SaleItem;
+import br.com.nicolas.ecommerce_compass.repositories.SaleItemRepository;
 import br.com.nicolas.ecommerce_compass.repositories.SaleRepository;
 import jakarta.transaction.Transactional;
 
 @Service
 public class SaleService {
 
-    private final String SALES_NOT_FOUND = "Não foram encontradas vendas cadastradas no banco de dados";
+    private static final String SALES_NOT_FOUND = "Não foram encontradas vendas cadastradas no banco de dados";
 
     @Autowired
     private SaleRepository saleRepository;
@@ -33,14 +35,17 @@ public class SaleService {
     @Autowired
     private ProductService productService;
 
-    @Cacheable(value = "sales")
-    public Sale findById(Long id) {
+    @Autowired
+    private SaleItemService saleItemService;
+
+    @Cacheable(value = "sales", key = "#id")
+    public Sale findById(UUID id) {
         return saleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Venda não encontrada no banco de dados para o id: " + id));
     }
 
-    @Cacheable(value = "sales")
+    @Cacheable(value = "sales", key = "#dayString")
     public List<Sale> findAllByDay(String dayString) {
         Instant start = LocalDate.parse(dayString).atStartOfDay(ZoneId.of("UTC")).toInstant();
         Instant end = LocalDate.parse(dayString).atTime(LocalTime.MAX).atZone(ZoneId.of("UTC")).toInstant();
@@ -49,7 +54,7 @@ public class SaleService {
         return sales;
     }
 
-    @Cacheable(value = "sales")
+    @Cacheable(value = "sales", key = "#yearStr + '-' + #monthStr")
     public List<Sale> findAllByMonth(String yearStr, String monthStr) {
         int year = Integer.parseInt(yearStr);
         int month = Integer.parseInt(monthStr);
@@ -64,7 +69,7 @@ public class SaleService {
         return sales;
     }
 
-    @Cacheable(value = "sales")
+    @Cacheable(value = "sales", key = "#weekString")
     public List<Sale> findAllByWeek(String weekString) {
         LocalDate startLD = LocalDate.parse(weekString);
         Instant start = startLD.with(DayOfWeek.MONDAY).atStartOfDay(ZoneId.of("UTC")).toInstant();
@@ -76,7 +81,7 @@ public class SaleService {
         return sales;
     }
 
-    @Cacheable(value = "sales")
+    @Cacheable(value = "sales", key = "'all'")
     public List<Sale> findAll() {
         var sales = saleRepository.findAll();
         this.validateSalesList(sales, SALES_NOT_FOUND);
@@ -96,9 +101,9 @@ public class SaleService {
     }
 
     @Transactional
-    @CacheEvict(value = "sales", allEntries = true)
-    public Sale update(Long id, Sale sale) {
-        var saleDB = findById(id);
+    @CacheEvict(value = "sales", key = "#id")
+    public Sale update(UUID id, Sale sale) {
+        var saleDB = this.findById(id);
         this.mergeItems(saleDB, sale);
         saleDB.setUpdatedAt();
         saleDB.setTotal(this.calculateTotalValue(saleDB));
@@ -107,8 +112,9 @@ public class SaleService {
 
     @Transactional
     @CacheEvict(value = "sales", allEntries = true)
-    public void delete(Long id) {
-        var sale = findById(id);
+    public void delete(UUID id) {
+        var sale = this.findById(id);
+        saleItemService.deleteItemsFromSale(sale.getItems());
         saleRepository.delete(sale);
     }
 
@@ -135,9 +141,7 @@ public class SaleService {
     }
 
     private void setItems(Sale sale) {
-        for (SaleItem item : sale.getItems()) {
-            this.validateAndProcessItem(item, sale);
-        }
+        sale.getItems().stream().forEach(item -> this.validateAndProcessItem(item, sale));
     }
 
     private void validateAndProcessItem(SaleItem item, Sale sale) {

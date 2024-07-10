@@ -10,6 +10,9 @@ import br.com.nicolas.ecommerce_compass.models.SaleItem;
 
 public class SaleMapper {
 
+    private SaleMapper() {
+    }
+
     public static Sale fromRequestToSale(SaleRequestDTO request) {
         Sale sale = new Sale();
         List<SaleItem> items = request.items().stream().map(SaleItemMapper::fromRequestToSaleItem).toList();
@@ -18,11 +21,11 @@ public class SaleMapper {
     }
 
     public static SaleResponseDTO fromSaleToResponse(Sale sale) {
-        List<SaleItemResponseDTO> items = sale.getItems().stream()
+        List<SaleItemResponseDTO> itemsSale = sale.getItems().stream()
                 .map(SaleItemMapper::fromSaleItemToResponse).toList();
 
         return new SaleResponseDTO(
                 sale.getId(), sale.getCreatedAt(), sale.getUpdatedAt(),
-                sale.getTotal(), items);
+                sale.getTotal(), itemsSale);
     }
 }

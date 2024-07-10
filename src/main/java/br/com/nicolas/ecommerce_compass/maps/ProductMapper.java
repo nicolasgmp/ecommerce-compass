@@ -1,6 +1,6 @@
 package br.com.nicolas.ecommerce_compass.maps;
 
-import br.com.nicolas.ecommerce_compass.dtos.product.ProductRequestDTO;
+import br.com.nicolas.ecommerce_compass.dtos.product.CreateProductDTO;
 import br.com.nicolas.ecommerce_compass.dtos.product.ProductResponseDTO;
 import br.com.nicolas.ecommerce_compass.models.Product;
 
@@ -9,7 +9,7 @@ public abstract class ProductMapper {
     private ProductMapper() {
     }
 
-    public static Product fromRequestToProduct(ProductRequestDTO dto) {
+    public static Product fromCreateToProduct(CreateProductDTO dto) {
         return new Product(dto.name(), dto.stockQty(), dto.price());
     }
 

@@ -1,13 +1,13 @@
 package br.com.nicolas.ecommerce_compass.models;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import br.com.nicolas.ecommerce_compass.exceptions.EntityValidationException;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -23,19 +23,23 @@ public class SaleItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
     private Integer quantity;
+
     @ManyToOne
     @JoinColumn(name = "sale_id")
     @JsonIgnore
     private Sale sale;
+
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
+
     @Transient
     @JsonIgnore
-    private Long productId;
+    private UUID productId;
 
     public SaleItem() {
     }
@@ -46,11 +50,11 @@ public class SaleItem implements Serializable {
         this.product = product;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -82,12 +86,12 @@ public class SaleItem implements Serializable {
     }
 
     @JsonIgnore
-    public Long getProductId() {
+    public UUID getProductId() {
         return productId;
     }
 
     @JsonProperty
-    public void setProductId(Long productId) {
+    public void setProductId(UUID productId) {
         this.productId = productId;
     }
 
