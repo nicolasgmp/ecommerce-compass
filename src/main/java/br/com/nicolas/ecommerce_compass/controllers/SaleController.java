@@ -81,4 +81,5 @@ public class SaleController {
         saleService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
 }
