@@ -33,7 +33,7 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{id}", produces = "application/json")
     public ResponseEntity<ProductResponseDTO> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(ProductMapper.fromProductToResponse(productService.findById(id)));
     }
