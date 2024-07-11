@@ -19,7 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import br.com.nicolas.ecommerce_compass.dtos.sale.SaleRequestDTO;
 import br.com.nicolas.ecommerce_compass.dtos.sale.SaleResponseDTO;
 import br.com.nicolas.ecommerce_compass.maps.SaleMapper;
-import br.com.nicolas.ecommerce_compass.services.SaleService;
+import br.com.nicolas.ecommerce_compass.services.interfaces.SaleService;
 import jakarta.transaction.Transactional;
 
 @RestController

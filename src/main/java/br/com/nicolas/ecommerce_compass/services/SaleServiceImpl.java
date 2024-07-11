@@ -20,12 +20,14 @@ import br.com.nicolas.ecommerce_compass.exceptions.ResourceNotFoundException;
 import br.com.nicolas.ecommerce_compass.models.Product;
 import br.com.nicolas.ecommerce_compass.models.Sale;
 import br.com.nicolas.ecommerce_compass.models.SaleItem;
-import br.com.nicolas.ecommerce_compass.repositories.SaleItemRepository;
 import br.com.nicolas.ecommerce_compass.repositories.SaleRepository;
+import br.com.nicolas.ecommerce_compass.services.interfaces.ProductService;
+import br.com.nicolas.ecommerce_compass.services.interfaces.SaleItemService;
+import br.com.nicolas.ecommerce_compass.services.interfaces.SaleService;
 import jakarta.transaction.Transactional;
 
 @Service
-public class SaleService {
+public class SaleServiceImpl implements SaleService {
 
     private static final String SALES_NOT_FOUND = "Não foram encontradas vendas cadastradas no banco de dados";
 
@@ -101,7 +103,7 @@ public class SaleService {
     }
 
     @Transactional
-    @CacheEvict(value = "sales", key = "#id")
+    @CacheEvict(value = "sales", allEntries = true)
     public Sale update(UUID id, Sale sale) {
         var saleDB = this.findById(id);
         this.mergeItems(saleDB, sale);

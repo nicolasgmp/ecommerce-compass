@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 
 import br.com.nicolas.ecommerce_compass.models.SaleItem;
 import br.com.nicolas.ecommerce_compass.repositories.SaleItemRepository;
+import br.com.nicolas.ecommerce_compass.services.interfaces.ProductService;
+import br.com.nicolas.ecommerce_compass.services.interfaces.SaleItemService;
 
 @Service
-public class SaleItemService {
+public class SaleItemServiceImpl implements SaleItemService {
 
     @Autowired
     private SaleItemRepository saleItemRepository;

@@ -13,10 +13,11 @@ import br.com.nicolas.ecommerce_compass.exceptions.EntityValidationException;
 import br.com.nicolas.ecommerce_compass.exceptions.ResourceNotFoundException;
 import br.com.nicolas.ecommerce_compass.models.Product;
 import br.com.nicolas.ecommerce_compass.repositories.ProductRepository;
+import br.com.nicolas.ecommerce_compass.services.interfaces.ProductService;
 import jakarta.transaction.Transactional;
 
 @Service
-public class ProductService {
+public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductRepository productRepository;

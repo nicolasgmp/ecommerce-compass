@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +20,7 @@ import br.com.nicolas.ecommerce_compass.dtos.product.ProductResponseDTO;
 import br.com.nicolas.ecommerce_compass.dtos.product.UpdateProductDTO;
 import br.com.nicolas.ecommerce_compass.maps.ProductMapper;
 import br.com.nicolas.ecommerce_compass.models.Product;
-import br.com.nicolas.ecommerce_compass.services.ProductService;
+import br.com.nicolas.ecommerce_compass.services.interfaces.ProductService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
