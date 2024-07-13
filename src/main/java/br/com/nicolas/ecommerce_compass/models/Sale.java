@@ -27,6 +27,7 @@ public class Sale implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "sale_id")
     private UUID id;
 
     @Column(updatable = false)

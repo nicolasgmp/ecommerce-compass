@@ -8,6 +8,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+
 @ControllerAdvice
 public class ControllerExceptionHandler {
 
@@ -15,7 +18,8 @@ public class ControllerExceptionHandler {
             EntityValidationException.class,
             DuplicateEntryException.class,
             HttpMessageNotReadableException.class,
-            MethodArgumentNotValidException.class
+            MethodArgumentNotValidException.class,
+            InvalidRequestException.class
     })
     public ResponseEntity<StandardError> handleBadRequestException(Exception ex) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
@@ -34,6 +38,16 @@ public class ControllerExceptionHandler {
     public ResponseEntity<StandardError> handleMethodNotAllowedException(Exception ex) {
         HttpStatus status = HttpStatus.METHOD_NOT_ALLOWED;
         StandardError err = new StandardError(status.value(), "Method Not Allowed", ex.getMessage());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler({
+            JWTCreationException.class,
+            JWTVerificationException.class
+    })
+    public ResponseEntity<StandardError> handleUnauthorizedException(Exception ex) {
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        StandardError err = new StandardError(status.value(), "Unauthorized", ex.getMessage());
         return ResponseEntity.status(status).body(err);
     }
 }
