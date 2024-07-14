@@ -8,9 +8,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import com.auth0.jwt.exceptions.JWTCreationException;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-
 @ControllerAdvice
 public class ControllerExceptionHandler {
 
@@ -41,13 +38,4 @@ public class ControllerExceptionHandler {
         return ResponseEntity.status(status).body(err);
     }
 
-    @ExceptionHandler({
-            JWTCreationException.class,
-            JWTVerificationException.class
-    })
-    public ResponseEntity<StandardError> handleUnauthorizedException(Exception ex) {
-        HttpStatus status = HttpStatus.UNAUTHORIZED;
-        StandardError err = new StandardError(status.value(), "Unauthorized", ex.getMessage());
-        return ResponseEntity.status(status).body(err);
-    }
 }
