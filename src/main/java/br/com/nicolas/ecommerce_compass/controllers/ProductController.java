@@ -43,7 +43,6 @@ public class ProductController {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     @PostMapping(produces = "application/json", consumes = "application/json")
     public ResponseEntity<ProductResponseDTO> create(@RequestBody @Valid CreateProductDTO product) {
         var newProduct = productService.create(ProductMapper.fromCreateToProduct(product));

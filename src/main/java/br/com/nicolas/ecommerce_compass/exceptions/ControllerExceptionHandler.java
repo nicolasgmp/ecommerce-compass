@@ -38,4 +38,18 @@ public class ControllerExceptionHandler {
         return ResponseEntity.status(status).body(err);
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<StandardError> handleForbiddenException(Exception ex) {
+        HttpStatus status = HttpStatus.FORBIDDEN;
+        StandardError err = new StandardError(status.value(), "Forbidden", ex.getMessage());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(MailServiceException.class)
+    public ResponseEntity<StandardError> handleInternalServerException(Exception ex) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        StandardError err = new StandardError(status.value(), "Internal Server Error", ex.getMessage());
+        return ResponseEntity.status(status).body(err);
+    }
+
 }

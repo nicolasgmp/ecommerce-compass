@@ -26,6 +26,6 @@ public class SaleMapper {
 
         return new SaleResponseDTO(
                 sale.getId(), sale.getCreatedAt(), sale.getUpdatedAt(),
-                sale.getTotal(), itemsSale);
+                sale.getTotal(), itemsSale, sale.getUser().getEmail());
     }
 }

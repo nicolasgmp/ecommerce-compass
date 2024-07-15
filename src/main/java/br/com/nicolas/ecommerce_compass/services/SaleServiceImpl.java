@@ -13,13 +13,19 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import br.com.nicolas.ecommerce_compass.exceptions.EntityValidationException;
+import br.com.nicolas.ecommerce_compass.exceptions.InvalidRequestException;
 import br.com.nicolas.ecommerce_compass.exceptions.ResourceNotFoundException;
+import br.com.nicolas.ecommerce_compass.exceptions.AccessDeniedException;
 import br.com.nicolas.ecommerce_compass.models.Product;
 import br.com.nicolas.ecommerce_compass.models.Sale;
 import br.com.nicolas.ecommerce_compass.models.SaleItem;
+import br.com.nicolas.ecommerce_compass.models.User;
 import br.com.nicolas.ecommerce_compass.repositories.SaleRepository;
 import br.com.nicolas.ecommerce_compass.services.interfaces.ProductService;
 import br.com.nicolas.ecommerce_compass.services.interfaces.SaleItemService;
@@ -42,9 +48,14 @@ public class SaleServiceImpl implements SaleService {
 
     @Cacheable(value = "sales", key = "#id")
     public Sale findById(UUID id) {
-        return saleRepository.findById(id)
+        Sale sale = saleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Venda não encontrada no banco de dados para o id: " + id));
+        if (!this.hasPermissionToGet(sale)) {
+            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
+        }
+
+        return sale;
     }
 
     @Cacheable(value = "sales", key = "#dayString")
@@ -53,7 +64,13 @@ public class SaleServiceImpl implements SaleService {
         Instant end = LocalDate.parse(dayString).atTime(LocalTime.MAX).atZone(ZoneId.of("UTC")).toInstant();
         var sales = saleRepository.findAllByCreatedAtBetween(start, end);
         this.validateSalesList(sales, SALES_NOT_FOUND + " para este dia");
-        return sales;
+        var filteredSales = sales.stream()
+                .filter(this::hasPermissionToGet)
+                .toList();
+        if (filteredSales.isEmpty()) {
+            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
+        }
+        return filteredSales;
     }
 
     @Cacheable(value = "sales", key = "#yearStr + '-' + #monthStr")
@@ -67,8 +84,13 @@ public class SaleServiceImpl implements SaleService {
 
         var sales = saleRepository.findAllByCreatedAtBetween(start, end);
         this.validateSalesList(sales, SALES_NOT_FOUND + " para este mês");
-
-        return sales;
+        var filteredSales = sales.stream()
+                .filter(this::hasPermissionToGet)
+                .toList();
+        if (filteredSales.isEmpty()) {
+            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
+        }
+        return filteredSales;
     }
 
     @Cacheable(value = "sales", key = "#weekString")
@@ -79,33 +101,51 @@ public class SaleServiceImpl implements SaleService {
 
         var sales = saleRepository.findAllByCreatedAtBetween(start, end);
         this.validateSalesList(sales, SALES_NOT_FOUND + " para esta semana");
-
-        return sales;
+        var filteredSales = sales.stream()
+                .filter(this::hasPermissionToGet)
+                .toList();
+        if (filteredSales.isEmpty()) {
+            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
+        }
+        return filteredSales;
     }
 
     @Cacheable(value = "sales", key = "'all'")
     public List<Sale> findAll() {
         var sales = saleRepository.findAll();
         this.validateSalesList(sales, SALES_NOT_FOUND);
-        return sales;
+        var filteredSales = sales.stream()
+                .filter(this::hasPermissionToGet)
+                .toList();
+        if (filteredSales.isEmpty()) {
+            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
+        }
+        return filteredSales;
     }
 
     @Transactional
     @CacheEvict(value = "sales", allEntries = true)
     public Sale create(Sale sale) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         this.setItems(sale);
         if (sale.getItems().isEmpty()) {
             throw new EntityValidationException(
                     "Uma venda não pode ser finalizada sem ao menos um produto a ser comprado");
         }
         sale.setTotal(this.calculateTotalValue(sale));
+        sale.setUser((User) auth.getPrincipal());
         return saleRepository.save(sale);
     }
 
     @Transactional
     @CacheEvict(value = "sales", allEntries = true)
     public Sale update(UUID id, Sale sale) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         var saleDB = this.findById(id);
+        if (!auth.getName().equals(saleDB.getUser().getEmail())) {
+            throw new InvalidRequestException("Apenas o mesmo usuário pode alterar suas vendas");
+        }
         this.mergeItems(saleDB, sale);
         saleDB.setUpdatedAt();
         saleDB.setTotal(this.calculateTotalValue(saleDB));
@@ -118,6 +158,10 @@ public class SaleServiceImpl implements SaleService {
         var sale = this.findById(id);
         saleItemService.deleteItemsFromSale(sale.getItems());
         saleRepository.delete(sale);
+    }
+
+    @CacheEvict(value = "sales", allEntries = true)
+    public void clearSalesCache() {
     }
 
     private void mergeItems(Sale saleDB, Sale sale) {
@@ -173,6 +217,17 @@ public class SaleServiceImpl implements SaleService {
         if (sales.isEmpty()) {
             throw new ResourceNotFoundException(msg);
         }
+    }
+
+    private boolean hasPermissionToGet(Sale sale) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        boolean isAdm = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN"));
+        boolean isOwner = sale.getUser().getEmail().equals(email);
+
+        return isAdm || isOwner;
     }
 
 }

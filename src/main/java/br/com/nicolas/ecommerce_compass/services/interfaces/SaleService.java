@@ -22,4 +22,6 @@ public interface SaleService {
     Sale update(UUID id, Sale sale);
 
     void delete(UUID id);
+
+    void clearSalesCache();
 }

@@ -10,14 +10,14 @@ import br.com.nicolas.ecommerce_compass.exceptions.ResourceNotFoundException;
 import br.com.nicolas.ecommerce_compass.repositories.UserRepository;
 
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService {
+public class AuthorizationService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return userRepository.findByEmail(email)
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByEmail(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
     }
 
