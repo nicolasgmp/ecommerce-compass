@@ -6,9 +6,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import br.com.nicolas.ecommerce_compass.dtos.Email;
+import br.com.nicolas.ecommerce_compass.services.interfaces.EmailService;
 
 @Service
-public class EmailService {
+public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private JavaMailSender mailSender;

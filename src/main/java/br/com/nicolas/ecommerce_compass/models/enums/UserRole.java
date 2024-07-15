@@ -1,4 +1,4 @@
-package br.com.nicolas.ecommerce_compass.models;
+package br.com.nicolas.ecommerce_compass.models.enums;
 
 public enum UserRole {
     ADMIN("admin"),
