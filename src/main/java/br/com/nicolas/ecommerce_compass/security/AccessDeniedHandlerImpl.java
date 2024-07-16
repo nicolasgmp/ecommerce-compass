@@ -5,8 +5,10 @@ import java.io.IOException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import br.com.nicolas.ecommerce_compass.exceptions.StandardError;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +19,13 @@ public class AccessDeniedHandlerImpl implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
             AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Acesso negado");
+        var status = HttpServletResponse.SC_FORBIDDEN;
+        response.setContentType("application/json");
+        response.setStatus(status);
+
+        StandardError err = new StandardError(status, "Forbidden", "Acesso Negado");
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(response.getOutputStream(), err);
     }
 
 }
