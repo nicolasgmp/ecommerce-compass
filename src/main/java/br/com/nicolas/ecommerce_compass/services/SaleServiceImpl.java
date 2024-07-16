@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import br.com.nicolas.ecommerce_compass.exceptions.EntityValidationException;
 import br.com.nicolas.ecommerce_compass.exceptions.InvalidRequestException;
 import br.com.nicolas.ecommerce_compass.exceptions.ResourceNotFoundException;
-import br.com.nicolas.ecommerce_compass.exceptions.AccessDeniedException;
+import br.com.nicolas.ecommerce_compass.exceptions.CustomAccessDeniedExcpetion;
 import br.com.nicolas.ecommerce_compass.models.Product;
 import br.com.nicolas.ecommerce_compass.models.Sale;
 import br.com.nicolas.ecommerce_compass.models.SaleItem;
@@ -36,6 +36,7 @@ import jakarta.transaction.Transactional;
 public class SaleServiceImpl implements SaleService {
 
     private static final String SALES_NOT_FOUND = "Não foram encontradas vendas cadastradas no banco de dados";
+    private static final String WITHOUT_PERMISSION = "Você não tem permissão para visualizar esse recurso";
 
     @Autowired
     private SaleRepository saleRepository;
@@ -52,7 +53,7 @@ public class SaleServiceImpl implements SaleService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Venda não encontrada no banco de dados para o id: " + id));
         if (!this.hasPermissionToGet(sale)) {
-            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
+            throw new CustomAccessDeniedExcpetion("Não foram encontradas vendas para este usuário");
         }
 
         return sale;
@@ -67,9 +68,7 @@ public class SaleServiceImpl implements SaleService {
         var filteredSales = sales.stream()
                 .filter(this::hasPermissionToGet)
                 .toList();
-        if (filteredSales.isEmpty()) {
-            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
-        }
+        this.validateFilteredSales(filteredSales, WITHOUT_PERMISSION);
         return filteredSales;
     }
 
@@ -87,9 +86,7 @@ public class SaleServiceImpl implements SaleService {
         var filteredSales = sales.stream()
                 .filter(this::hasPermissionToGet)
                 .toList();
-        if (filteredSales.isEmpty()) {
-            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
-        }
+        this.validateFilteredSales(filteredSales, WITHOUT_PERMISSION);
         return filteredSales;
     }
 
@@ -104,9 +101,7 @@ public class SaleServiceImpl implements SaleService {
         var filteredSales = sales.stream()
                 .filter(this::hasPermissionToGet)
                 .toList();
-        if (filteredSales.isEmpty()) {
-            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
-        }
+        this.validateFilteredSales(filteredSales, WITHOUT_PERMISSION);
         return filteredSales;
     }
 
@@ -117,9 +112,7 @@ public class SaleServiceImpl implements SaleService {
         var filteredSales = sales.stream()
                 .filter(this::hasPermissionToGet)
                 .toList();
-        if (filteredSales.isEmpty()) {
-            throw new AccessDeniedException("Você não tem permissão para visualizar esse recurso");
-        }
+        this.validateFilteredSales(filteredSales, WITHOUT_PERMISSION);
         return filteredSales;
     }
 
@@ -216,6 +209,12 @@ public class SaleServiceImpl implements SaleService {
     private void validateSalesList(List<Sale> sales, String msg) {
         if (sales.isEmpty()) {
             throw new ResourceNotFoundException(msg);
+        }
+    }
+
+    private void validateFilteredSales(List<Sale> filtered, String msg) {
+        if (filtered.isEmpty()) {
+            throw new CustomAccessDeniedExcpetion(msg);
         }
     }
 

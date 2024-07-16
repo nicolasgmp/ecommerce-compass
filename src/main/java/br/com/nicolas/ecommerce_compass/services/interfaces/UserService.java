@@ -1,11 +1,12 @@
 package br.com.nicolas.ecommerce_compass.services.interfaces;
 
-import br.com.nicolas.ecommerce_compass.models.User;
+import br.com.nicolas.ecommerce_compass.dtos.user.LoginRequestDTO;
+import br.com.nicolas.ecommerce_compass.dtos.user.RegisterDTO;
 
 public interface UserService {
-    String login(User user);
+    String login(LoginRequestDTO dto);
 
-    void register(User user);
+    void register(RegisterDTO dto);
 
     void sendResetToken();
 

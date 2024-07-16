@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.nicolas.ecommerce_compass.dtos.user.LoginRequestDTO;
 import br.com.nicolas.ecommerce_compass.dtos.user.RegisterDTO;
 import br.com.nicolas.ecommerce_compass.dtos.user.UserResponseDTO;
-import br.com.nicolas.ecommerce_compass.maps.UserMapper;
 import br.com.nicolas.ecommerce_compass.services.interfaces.UserService;
 import jakarta.transaction.Transactional;
 
@@ -27,13 +26,13 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<UserResponseDTO> login(@RequestBody LoginRequestDTO dto) {
         return ResponseEntity.ok()
-                .body(UserMapper.fromTokenToResponseDTO(userService.login(UserMapper.fromLoginDTOToUser(dto))));
+                .body(new UserResponseDTO(userService.login(dto)));
     }
 
     @Transactional
     @PostMapping("/register")
     public ResponseEntity<Void> register(@RequestBody RegisterDTO dto) {
-        userService.register(UserMapper.fromRegisterDTOToUser(dto));
+        userService.register(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

@@ -4,13 +4,14 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import br.com.nicolas.ecommerce_compass.dtos.Email;
+import br.com.nicolas.ecommerce_compass.dtos.user.LoginRequestDTO;
+import br.com.nicolas.ecommerce_compass.dtos.user.RegisterDTO;
 import br.com.nicolas.ecommerce_compass.exceptions.DuplicateEntryException;
 import br.com.nicolas.ecommerce_compass.exceptions.EntityValidationException;
 import br.com.nicolas.ecommerce_compass.exceptions.InvalidRequestException;
@@ -22,10 +23,11 @@ import br.com.nicolas.ecommerce_compass.services.interfaces.EmailService;
 import br.com.nicolas.ecommerce_compass.services.interfaces.SaleService;
 import br.com.nicolas.ecommerce_compass.services.interfaces.UserService;
 
+@Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private AuthenticationManager authManager;
+    // @Autowired
+    // private AuthenticationManager authManager;
 
     @Autowired
     private UserRepository userRepository;
@@ -52,12 +54,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Token inválido ou expirado"));
     }
 
-    public String login(User user) {
-        User userDB = this.findByEmail(user.getEmail());
-        if (passwordEncoder.matches(user.getEmail(), userDB.getEmail())) {
-            var usernamePassword = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
-            var auth = authManager.authenticate(usernamePassword);
-            var token = tokenService.generateToken((User) auth.getPrincipal());
+    @Override
+    public String login(LoginRequestDTO dto) {
+        User userDB = this.findByEmail(dto.email());
+        if (passwordEncoder.matches(dto.password(), userDB.getPassword())) {
+            var token = tokenService.generateToken(userDB);
 
             saleService.clearSalesCache();
 
@@ -67,21 +68,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void register(User user) {
-        if (!this.emailMatchesPattern(user.getEmail())) {
+    public void register(RegisterDTO dto) {
+        if (!this.emailMatchesPattern(dto.email())) {
             throw new InvalidRequestException("Email em formato inválido. Ex.: email@email.com");
         }
-
-        var userDB = this.findByEmail(user.getEmail());
-        if (userDB != null) {
-            throw new DuplicateEntryException("Email já existente");
+        if (!this.passwordMatchesPattern(dto.password())) {
+            throw new InvalidRequestException(
+                    "A senha precisa ter no mínimo 8 carácteres, uma letra maiúscula, uma carácter especial e ao menos um dígito. Ex: SenhaForte123!");
         }
 
-        String encryptedPasswd = passwordEncoder.encode(user.getPassword());
+        userRepository.findByEmail(dto.email()).ifPresent(userDB -> {
+            throw new DuplicateEntryException("Email já existente");
+        });
+
+        String encryptedPasswd = passwordEncoder.encode(dto.password());
         var newUser = new User();
-        newUser.setEmail(user.getEmail());
+        newUser.setEmail(dto.email());
         newUser.setPassword(encryptedPasswd);
-        newUser.setRole(user.getRole());
+        newUser.setRole(dto.role());
 
         userRepository.save(newUser);
     }
@@ -107,8 +111,9 @@ public class UserServiceImpl implements UserService {
     public void resetPassword(String token, String password) {
         User user = this.findByResetToken(token);
 
-        if (password == null || password.isBlank()) {
-            throw new EntityValidationException("A senha não pode ser vazia");
+        if (!this.passwordMatchesPattern(password)) {
+            throw new InvalidRequestException(
+                    "A senha precisa ter no mínimo 8 carácteres, uma letra maiúscula, uma carácter especial e ao menos um dígito. Ex: SenhaForte123!");
         }
 
         String encryptedPassword = passwordEncoder.encode(password);
@@ -119,7 +124,12 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean emailMatchesPattern(String email) {
-        String emailRegex = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$";
+        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{3,}$";
         return Pattern.compile(emailRegex).matcher(email).matches();
+    }
+
+    private boolean passwordMatchesPattern(String password) {
+        String passwordRegex = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
+        return Pattern.compile(passwordRegex).matcher(password).matches();
     }
 }
