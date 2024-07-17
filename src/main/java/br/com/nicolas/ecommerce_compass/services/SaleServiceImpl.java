@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import br.com.nicolas.ecommerce_compass.exceptions.EntityValidationException;
 import br.com.nicolas.ecommerce_compass.exceptions.InvalidRequestException;
 import br.com.nicolas.ecommerce_compass.exceptions.ResourceNotFoundException;
-import br.com.nicolas.ecommerce_compass.exceptions.CustomAccessDeniedExcpetion;
+import br.com.nicolas.ecommerce_compass.exceptions.UnauthorizedOperationException;
 import br.com.nicolas.ecommerce_compass.models.Product;
 import br.com.nicolas.ecommerce_compass.models.Sale;
 import br.com.nicolas.ecommerce_compass.models.SaleItem;
@@ -53,7 +53,7 @@ public class SaleServiceImpl implements SaleService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Venda não encontrada no banco de dados para o id: " + id));
         if (!this.hasPermissionToGet(sale)) {
-            throw new CustomAccessDeniedExcpetion("Não foram encontradas vendas para este usuário");
+            throw new UnauthorizedOperationException("Não foram encontradas vendas para este usuário");
         }
 
         return sale;
@@ -214,7 +214,7 @@ public class SaleServiceImpl implements SaleService {
 
     private void validateFilteredSales(List<Sale> filtered, String msg) {
         if (filtered.isEmpty()) {
-            throw new CustomAccessDeniedExcpetion(msg);
+            throw new UnauthorizedOperationException(msg);
         }
     }
 

@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,10 +14,11 @@ import br.com.nicolas.ecommerce_compass.dtos.Email;
 import br.com.nicolas.ecommerce_compass.dtos.user.LoginRequestDTO;
 import br.com.nicolas.ecommerce_compass.dtos.user.RegisterDTO;
 import br.com.nicolas.ecommerce_compass.exceptions.DuplicateEntryException;
-import br.com.nicolas.ecommerce_compass.exceptions.EntityValidationException;
 import br.com.nicolas.ecommerce_compass.exceptions.InvalidRequestException;
 import br.com.nicolas.ecommerce_compass.exceptions.ResourceNotFoundException;
+import br.com.nicolas.ecommerce_compass.exceptions.UnauthorizedOperationException;
 import br.com.nicolas.ecommerce_compass.models.User;
+import br.com.nicolas.ecommerce_compass.models.enums.UserRole;
 import br.com.nicolas.ecommerce_compass.repositories.UserRepository;
 import br.com.nicolas.ecommerce_compass.security.TokenService;
 import br.com.nicolas.ecommerce_compass.services.interfaces.EmailService;
@@ -110,10 +112,23 @@ public class UserServiceImpl implements UserService {
     @Override
     public void resetPassword(String token, String password) {
         User user = this.findByResetToken(token);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!(user.getEmail().equals(auth.getName()) || this.isAdmin())) {
+            throw new UnauthorizedOperationException("Apenas o próprio usuário ou ADMINs podem resetar a senha");
+        }
 
         if (!this.passwordMatchesPattern(password)) {
             throw new InvalidRequestException(
                     "A senha precisa ter no mínimo 8 carácteres, uma letra maiúscula, uma carácter especial e ao menos um dígito. Ex: SenhaForte123!");
+        }
+
+        if (this.isAdmin()) {
+            String subject = "Reset de Senha - Nova Senha";
+            String text = "Olá " + user.getEmail() + ", \n\n"
+                    + "Segue sua nova senha: " + password + "\n\n"
+                    + "Lembre-se de redefini-la assim que entrar em nossos serviços";
+            emailService.sendEmail(new Email(user.getEmail(), subject, text));
         }
 
         String encryptedPassword = passwordEncoder.encode(password);
@@ -131,5 +146,12 @@ public class UserServiceImpl implements UserService {
     private boolean passwordMatchesPattern(String password) {
         String passwordRegex = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
         return Pattern.compile(passwordRegex).matcher(password).matches();
+    }
+
+    private boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN"));
     }
 }

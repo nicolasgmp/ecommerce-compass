@@ -1,22 +1,14 @@
 package br.com.nicolas.ecommerce_compass.exceptions;
 
-import java.io.IOException;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 @RestControllerAdvice
@@ -52,7 +44,7 @@ public class ControllerExceptionHandler {
         return ResponseEntity.status(status).body(err);
     }
 
-    @ExceptionHandler(CustomAccessDeniedExcpetion.class)
+    @ExceptionHandler(UnauthorizedOperationException.class)
     public ResponseEntity<StandardError> handleForbiddenException(Exception ex) {
         HttpStatus status = HttpStatus.FORBIDDEN;
         StandardError err = new StandardError(status.value(), "Forbidden", ex.getMessage());

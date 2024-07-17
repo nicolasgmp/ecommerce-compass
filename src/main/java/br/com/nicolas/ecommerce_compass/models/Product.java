@@ -126,7 +126,7 @@ public class Product implements Serializable {
     }
 
     public boolean isSelled() {
-        return !items.isEmpty();
+        return !this.getItems().isEmpty();
     }
 
     @PrePersist
